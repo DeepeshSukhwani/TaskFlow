@@ -1,174 +1,177 @@
 # TaskFlow – Team Task Management Application
 
-TaskFlow is a full-stack task management application that helps users organize projects, manage tasks, track progress, and identify overdue work.
+TaskFlow is a full-stack task management application that helps users organize projects, manage tasks, track progress, and monitor overdue work.
 
 ## Tech Stack
 
-### Backend
-- Kotlin
-- Spring Boot 3.5
-- Spring Security
-- JWT Authentication
-- Spring Data JPA / Hibernate
-- PostgreSQL
-- Gradle
-- JUnit 5 and MockK (test dependencies)
-
-### Frontend
-- React
-- TypeScript
-- Vite
-- React Router
-- Axios
-- Lucide React
+- **Backend:** Kotlin, Spring Boot 3.5, Spring Security, JWT, Spring Data JPA
+- **Frontend:** React, TypeScript, Vite, Axios
+- **Database:** PostgreSQL
+- **Tools:** Gradle, Docker, Git
 
 ## Features
 
-- User registration and login with JWT authentication.
-- Secure, user-specific project management.
-- Create, view, update, and delete projects.
-- Create, view, edit, and delete tasks.
-- Task statuses: TODO, IN_PROGRESS, DONE.
-- Task priorities: LOW, MEDIUM, HIGH.
-- Filter tasks by status and priority.
-- Sort and paginate task lists.
-- Update task status.
+- User registration and JWT authentication.
+- Create, update, and delete projects.
+- Create, edit, and delete tasks.
+- Manage task status and priority.
+- Filter, sort, and paginate tasks.
 - Highlight overdue tasks.
-- Project summary with total, pending, in-progress, completed, and overdue task counts.
-- Protected frontend routes.
+- Project progress summary.
+- Secure user-specific project access.
 
 ## Project Structure
 
 ```text
 TaskFlow/
-├── backend/
-│   └── src/
-│       └── main/
-│           ├── kotlin/
-│           └── resources/
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── layouts/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── types/
-│   │   └── utils/
-│   └── package.json
+├── backend/       # Spring Boot application
+├── frontend/      # React application
 ├── .gitignore
 └── README.md
 ```
 
-## Prerequisites
+## Setup and Installation
+
+### Prerequisites
 
 - JDK 21
-- Gradle 9.8.2
 - Node.js and npm
 - Docker Desktop
 - Git
 
-## Database Configuration
+### 1. Clone the Repository
 
-TaskFlow uses PostgreSQL.
+```powershell
+git clone https://github.com/DeepeshSukhwani/TaskFlow.git
+cd TaskFlow
+```
 
-Create a PostgreSQL database and configure these environment variables:
+### 2. Start PostgreSQL
 
-| Variable | Description |
+Start Docker Desktop and wait for the Docker engine to become ready.
+
+Run this command from PowerShell:
+
+```powershell
+docker run -d --name taskflow-postgres `
+  -e POSTGRES_DB=taskflowdb `
+  -e POSTGRES_USER=taskflow `
+  -e POSTGRES_PASSWORD=YOUR_DB_PASSWORD `
+  -p 5433:5432 `
+  -v taskflow-postgres-data:/var/lib/postgresql/data `
+  postgres:17
+```
+
+Replace `YOUR_DB_PASSWORD` with your own database password.
+
+Verify the container:
+
+```powershell
+docker ps
+```
+
+### 3. Configure Backend
+
+Open the `backend` folder in IntelliJ IDEA.
+
+Go to **Run → Edit Configurations → Gradle bootRun → Environment Variables**.
+
+Configure:
+
+| Variable | Value |
 |---|---|
-| DB_URL | PostgreSQL JDBC connection URL |
-| DB_USERNAME | Database username |
-| DB_PASSWORD | Database password |
-| JWT_SECRET | Base64-encoded JWT signing secret |
+| `DB_URL` | `jdbc:postgresql://localhost:5433/taskflowdb` |
+| `DB_USERNAME` | `taskflow` |
+| `DB_PASSWORD` | Your PostgreSQL password |
+| `JWT_SECRET` | Your Base64-encoded secret |
+| `JAVA_TOOL_OPTIONS` | `-Duser.timezone=UTC` |
 
-Example local database URL:
+Generate a JWT secret using PowerShell:
 
-```text
-jdbc:postgresql://localhost:5433/taskflowdb
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
+$rng.Dispose()
 ```
 
-Never commit actual database credentials or JWT secrets.
+Copy the generated value into `JWT_SECRET`.
 
-## Running the Backend
+Keep your credentials private. Never commit actual passwords or JWT secrets.
 
-1. Start PostgreSQL.
-2. Configure the required environment variables.
-3. Open the backend folder in IntelliJ IDEA.
-4. Run the Gradle `bootRun` task.
+### 4. Run Backend
 
-Backend URL:
+From IntelliJ, run the Gradle `bootRun` task.
 
-```text
-http://localhost:8080
+Alternatively, from the project root:
+
+```powershell
+cd backend
+.\gradlew.bat bootRun
 ```
 
-Health endpoint:
+Backend URL: `http://localhost:8080`
 
-```text
-GET /api/health
-```
+Health check: `http://localhost:8080/api/health`
 
-## Running the Frontend
+### 5. Run Frontend
 
-Open a terminal in the frontend directory:
+Open a second terminal from the project root:
 
-```bash
+```powershell
+cd frontend
 npm install
 npm run dev
 ```
 
-Frontend URL:
+Frontend URL: `http://localhost:5173`
+
+### 6. Start Using TaskFlow
+
+1. Open `http://localhost:5173`.
+2. Register a new account.
+3. Log in.
+4. Create your first project.
+5. Add tasks and manage their progress.
+
+## API Overview
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Register |
+| POST | `/api/auth/login` | Login |
+| GET | `/api/projects` | List projects |
+| POST | `/api/projects` | Create project |
+| GET | `/api/projects/{id}/summary` | Project summary |
+| POST | `/api/projects/{id}/tasks` | Create task |
+| GET | `/api/projects/{id}/tasks` | List tasks |
+| PUT | `/api/projects/{id}/tasks/{taskId}` | Update task |
+| PATCH | `/api/projects/{id}/tasks/{taskId}/status` | Update task status |
+| DELETE | `/api/projects/{id}/tasks/{taskId}` | Delete task |
+
+Protected endpoints require a JWT Bearer token.
+
+## Architecture
 
 ```text
-http://localhost:5173
+React Frontend
+      |
+      v
+REST Controllers
+      |
+      v
+Service Layer
+      |
+      v
+Repository Layer
+      |
+      v
+PostgreSQL
 ```
 
-## Main API Endpoints
+**Design patterns:** Repository Pattern, Specification Pattern, and Service Layer.
 
-### Authentication
-- POST `/api/auth/register`
-- POST `/api/auth/login`
+## Repository
 
-### Projects
-- GET `/api/projects`
-- POST `/api/projects`
-- GET `/api/projects/{projectId}`
-- PUT `/api/projects/{projectId}`
-- DELETE `/api/projects/{projectId}`
-- GET `/api/projects/{projectId}/summary`
-
-### Tasks
-- POST `/api/projects/{projectId}/tasks`
-- GET `/api/projects/{projectId}/tasks`
-- PUT `/api/projects/{projectId}/tasks/{taskId}`
-- PATCH `/api/projects/{projectId}/tasks/{taskId}/status`
-- DELETE `/api/projects/{projectId}/tasks/{taskId}`
-
-Task listing supports status and priority filters, sorting, and pagination.
-
-## Security
-
-- JWT-based authentication.
-- Protected API endpoints.
-- User-specific project ownership checks.
-- Password encoding.
-- Request validation.
-
-## Design Patterns
-
-- **Repository Pattern:** Separates database access from business logic.
-- **Specification Pattern:** Supports dynamic task filtering based on multiple criteria.
-- **Service Layer:** Keeps business logic separate from controllers.
-
-## Sample Usage
-
-1. Register a new account.
-2. Log in to TaskFlow.
-3. Create a project.
-4. Add tasks with priorities and due dates.
-5. Update task statuses as work progresses.
-6. Use filters and project summaries to monitor progress.
-
-## License
-
-This project is developed as a software engineering assignment.
+[GitHub – TaskFlow](https://github.com/DeepeshSukhwani/TaskFlow)
